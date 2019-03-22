@@ -16,7 +16,6 @@ class PhotoModel {
     let secret: String
     let server_id: String
     let title: String
-    var noMatchFound: Int?
     
     init(photo_id: String, farm_id: Int, secret: String, server_id: String, title: String) {
         self.photo_id = photo_id
@@ -34,8 +33,8 @@ class PhotoModel {
         return imageURL(size: "c")
     }
     
-    func downloadLargeImage() -> URL {
-        return imageURL(size: "b")
+    func downloadLargeImage(size: String) -> URL {
+        return imageURL(size: size)
     }
     
     private func imageURL (size: String = "m") -> URL {

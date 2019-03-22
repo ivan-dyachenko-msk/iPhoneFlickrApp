@@ -16,71 +16,75 @@ protocol PhotoSearchViewControllerOutput: class {
 }
 
 protocol PhotoSearchViewControllerInput: class {
-    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPages: Int)
-    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPages: Int)
-    func searchBar ()
+    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int)
+    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPhotos: Int)
     func reloadData()
 }
 
 class PhotoSearchViewController: UIViewController, PhotoSearchViewControllerInput {
     
     var currentPage = 1
-    var totalPages = 0
+    var totalPhotos = 0
     var photosArray: [PhotoModel] = []
-    
-    @IBOutlet weak var galleryCollectionView: UICollectionView!
-    @IBOutlet weak var bottomConstraintGalleryCollectionView: NSLayoutConstraint!
-    
-    
     var presenter: PhotoSearchViewControllerOutput!
     var presenterOutput: PhotoSearchPresenterOutput!
     let searchController = UISearchController(searchResultsController: nil)
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
+    @IBOutlet weak var galleryCollectionView: UICollectionView!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        PhotoSearchAssembly.shared.assembly(viewController: self)
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        
         super.viewDidAppear(animated)
         searchController.searchBar.becomeFirstResponder()
-        searchController.searchBar.sizeToFit()
         searchController.isActive = true
-        UIView.animate(withDuration: 0.1, animations: {
+        UIView.animate(withDuration: 0.2, animations: {
             self.navigationController?.navigationBar.barStyle = .default
-            self.tabBarController?.tabBar.barStyle = UIBarStyle.default
+        })
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        UIView.animate(withDuration: 0.2, animations: {
+            self.navigationController?.navigationBar.barStyle = .blackTranslucent
         })
     }
     
     override func viewDidLoad() {
-    
-        PhotoSearchAssembly.shared.assembly(viewController: self)
         super.viewDidLoad()
-        searchBar()
-        searchController.searchBar.placeholder = "Search photos for tags"
-        searchController.searchBar.delegate = self
-        searchController.dimsBackgroundDuringPresentation = false
-        galleryCollectionView.contentInset = .zero
+        configureSearchBar()
+        self.activityIndicator.isHidden = true
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         presenter.passData(segue: segue)
-        print("passed")
+    
     }
     
-
-    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPages: Int) {
+    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
         if photos != nil {
             self.photosArray.append(contentsOf: photos!)
-            self.totalPages = totalPages
+            self.totalPhotos = totalPhotos
         } else {
-            presenterOutput.displayEmptyRequest(vc: self)
+            presenterOutput.displayEmptyRequest(vc: self, searchBar: searchController.searchBar)
+        }
+        DispatchQueue.main.async {
+            self.activityIndicator.isHidden = true
+            self.activityIndicator.stopAnimating()
         }
     }
     
-    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPages: Int) {
+    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPhotos: Int) {
         self.photosArray.append(contentsOf: photos)
-        self.totalPages = totalPages
+        self.totalPhotos = totalPhotos
     }
     
     func performSearch (searchText: String) {
@@ -92,36 +96,21 @@ class PhotoSearchViewController: UIViewController, PhotoSearchViewControllerInpu
             self.galleryCollectionView.reloadData()
         }
     }
-    
-//    func displayEmptyRequest() {
-//        DispatchQueue.main.async {
-//            let alertController = UIAlertController(title: "Photo not found!", message: "change query", preferredStyle: .alert)
-//            alertController.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { action in
-//                alertController.dismiss(animated: true, completion: nil)
-//            }) )
-//            self.present(alertController, animated: true)
-//            self.searchBar()
-//        }
-//    }
 }
-
 
 //MARK:- DataSource
 extension PhotoSearchViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
+
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoSearchItem", for: indexPath) as! PhotoSearchItem
         cell.photoItem.layer.cornerRadius = 10
         cell.photoItem.layer.masksToBounds = true
-        if indexPath.row == photosArray.count - 6 && self.totalPages > photosArray.count {
-            print("NextPage, totalPages: \(totalPages), photosCount: \(photosArray.count)")
+        if indexPath.row == photosArray.count - 6 && (self.totalPhotos) > photosArray.count {
             currentPage += 1
             self.performSearch(searchText: Constants.tagForSearch)
         }
-        else {
-            print("Pages ended")
-        }
+
         cell.photoItem.sd_setImage(with: photosArray[indexPath.row].downloadSmallImage() as URL) {(image, error, cache, url) in
             cell.photoItem.image = image
 //            UIView.animate(withDuration: 1.0, animations: {
@@ -136,8 +125,6 @@ extension PhotoSearchViewController: UICollectionViewDataSource {
     }
 }
 
-
-
 extension PhotoSearchViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         self.presenter.goToDetailScreen()
@@ -150,7 +137,6 @@ extension PhotoSearchViewController: UICollectionViewDelegateFlowLayout {
         
         var itemSize : CGSize
         let length = (UIScreen.main.bounds.width) / 3 - 1.4
-        
         if indexPath.row < photosArray.count {
             itemSize = CGSize(width: length, height: length)
         } else {
@@ -161,34 +147,39 @@ extension PhotoSearchViewController: UICollectionViewDelegateFlowLayout {
 }
 
 //MARK:- SearchBarSetup
-extension PhotoSearchViewController: UISearchResultsUpdating, UISearchBarDelegate {
+extension PhotoSearchViewController: UISearchBarDelegate {
     
-    func updateSearchResults(for searchController: UISearchController) {
-        //TODO
-    }
-    
-    func searchBar () {
+    func configureSearchBar() {
         navigationItem.searchController = searchController
-        searchController.searchResultsUpdater = self
-        navigationController?.navigationBar.isTranslucent = true
-        searchController.searchBar.searchBarStyle = .minimal
+        navigationItem.hidesSearchBarWhenScrolling = true
         definesPresentationContext = true
+        searchController.searchBar.delegate = self
+        searchController.searchBar.searchBarStyle = .minimal
+        searchController.searchBar.placeholder = "Search photos"
+        searchController.dimsBackgroundDuringPresentation = false
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         Constants.tagForSearch = searchBar.text!
         DispatchQueue.main.async {
+            self.currentPage = 1
             self.photosArray.removeAll()
             self.galleryCollectionView.reloadData()
+            self.activityIndicator.isHidden = false
+            self.activityIndicator.startAnimating()
+            self.performSearch(searchText: self.searchController.searchBar.text!)
         }
-        performSearch(searchText: searchController.searchBar.text!)
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchController.isActive = true
         DispatchQueue.main.async {
             self.photosArray.removeAll()
             self.currentPage = 1
+            self.activityIndicator.stopAnimating()
+            self.activityIndicator.isHidden = true
             self.galleryCollectionView.reloadData()
+            self.navigationController?.navigationBar.prefersLargeTitles = true
         }
     }
 }

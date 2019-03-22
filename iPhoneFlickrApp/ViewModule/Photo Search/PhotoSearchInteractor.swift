@@ -13,8 +13,8 @@ protocol PhotoSearchInteractorInput: class {
 }
 
 protocol PhotoSearchInteractorOutput: class {
-    func providedPhotos(_ photos: [PhotoModel]?, totalPages: NSInteger)
-    func providedPhotosNext(_ photos: [PhotoModel], totalPages: Int)
+    func providedPhotos(_ photos: [PhotoModel]?, totalPhotos: NSInteger)
+    func providedPhotosNext(_ photos: [PhotoModel], totalPhotos: Int)
 }
 
 class PhotoSearchInteractor: PhotoSearchInteractorInput {
@@ -22,22 +22,17 @@ class PhotoSearchInteractor: PhotoSearchInteractorInput {
     var presenter: PhotoSearchPresenterInput!
     var API_WrapperProtocol: API_WRAPPERInput!
     
-    func noMatchPhotos(totalPages: Int) {
-        
-    }
-    
     func fetchPhotosFromInteractor(searchText: String, page: Int) {
-        API_WrapperProtocol.fetchPhotos(urlTo: Constants.photoSearchURL(page: page), searchText: searchText, page: page, closure: { (error, totalPages, photos) in
+        API_WrapperProtocol.fetchPhotos(urlTo: Constants.photoSearchURL(page: page), searchText: searchText, page: page, closure: { (error, totalPhotos, photos) in
             if photos == nil {
-                self.presenter.providedPhotos(nil, totalPages: totalPages)
+                self.presenter.providedPhotos(nil, totalPhotos: totalPhotos)
                 print("PHOTOS IS NIL")
             }
             if let photo = photos {
-                if page == 1 && (photos!.count) <= totalPages {
-                self.presenter.providedPhotos(photo, totalPages: totalPages)
-                    print("TOTAL --- \(totalPages)")
+                if page == 1 && (photos!.count) <= (totalPhotos) {
+                    self.presenter.providedPhotos(photo, totalPhotos: totalPhotos)
                 } else {
-                    self.presenter.providedPhotosNext(photo, totalPages: totalPages)
+                    self.presenter.providedPhotosNext(photo, totalPhotos: totalPhotos)
                 }
             } else if let error = error {
                 print(error)

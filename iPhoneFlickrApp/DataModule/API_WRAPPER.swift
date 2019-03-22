@@ -16,15 +16,13 @@ protocol API_WRAPPERInput: class {
 protocol API_WRAPPEROutput: PhotoSearchInteractorInput {
 }
 
-protocol API_WRAPPERForLoadLargeImageOutput {
+protocol API_WRAPPERForLoadLargeImageInput {
     func loadLargeImage (url : URL, closure: @escaping (UIImage?, NSError?) -> Void)
+    func getSizes (photo_id: String, closure: @escaping (String?) -> Void)
 }
 
-var view = PhotoSearchViewController()
-
-
-class API_WRAPPER: API_WRAPPERInput, API_WRAPPERForLoadLargeImageOutput {
-        
+class API_WRAPPER: API_WRAPPERInput {
+    
     func fetchPhotos (urlTo: String, searchText: String?, page: Int, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void {
         let photoURL = urlTo
         let url = URL(string: photoURL)
@@ -35,47 +33,47 @@ class API_WRAPPER: API_WRAPPERInput, API_WRAPPERForLoadLargeImageOutput {
                 closure(error as NSError?, 0, nil)
             }
             if data != nil {
-            do {
-                let results = try JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any]
-                
-                if let resultDictionary = results!["photos"] as? NSDictionary {
-                    
-                    var totalPageCount : Int?
-                    
-                    if urlTo == Constants.photoRecentURL(page: page) {
-                        let photosPageCount = resultDictionary["total"] as? Int
-                        totalPageCount = photosPageCount
-                    }
-                    else if urlTo == Constants.photoSearchURL(page: page) {
-                        let photosPageCount = resultDictionary["total"] as? String
-                        totalPageCount = Int(photosPageCount!)
-                    }
-                    
-                    if totalPageCount == 0 {
-//                        Constants.noMatchFound = totalPageCount!
-                        closure(nil, totalPageCount!, nil)
-                    } else {
-                        print("totalPageCount != 0")
-                        let photosArray = resultDictionary["photo"] as! [NSDictionary]
-                        let flickrPhotos: [PhotoModel] = photosArray.map( {(photoDictionary) -> PhotoModel in
-                            let flickrPhoto = PhotoModel(photo_id: photoDictionary["id"] as! String, farm_id: photoDictionary["farm"] as! Int, secret: photoDictionary["secret"] as! String, server_id: photoDictionary["server"] as! String, title: photoDictionary["title"] as! String)
-                            return flickrPhoto
-                        })
-                        DispatchQueue.main.async {
-                            closure(nil, totalPageCount!, flickrPhotos)
+                do {
+                    let results = try JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any]
+                    if let resultDictionary = results!["photos"] as? NSDictionary {
+                        var totalPhotosCount : Int?
+                        
+                        if resultDictionary["total"] as? Int != nil {
+                            totalPhotosCount = resultDictionary["total"] as? Int
+                        } else if ((resultDictionary["total"] as? String) != nil) {
+                            let format = resultDictionary["total"] as? String
+                            totalPhotosCount = Int(format!)
+                        } else {
+                            totalPhotosCount = 0
+                            print("Some error parse TOTAL in API-WRAPPER")
+                        }
+                        
+                        if totalPhotosCount == 0 {
+                            closure(nil, Int(totalPhotosCount!), nil)
+                        } else {
+                            let photosArray = resultDictionary["photo"] as! [NSDictionary]
+                            let flickrPhotos: [PhotoModel] = photosArray.map( {(photoDictionary) -> PhotoModel in
+                                let flickrPhoto = PhotoModel(photo_id: photoDictionary["id"] as! String, farm_id: photoDictionary["farm"] as! Int, secret: photoDictionary["secret"] as! String, server_id: photoDictionary["server"] as! String, title: photoDictionary["title"] as! String)
+                                return flickrPhoto
+                            })
+                            DispatchQueue.main.async {
+                                closure(nil, Int(totalPhotosCount!), flickrPhotos)
+                            }
                         }
                     }
+                } catch let error as NSError {
+                    print("Error parse JSON \(error)")
+                    closure(error as NSError?, 0, nil)
+                    return
                 }
-            } catch let error as NSError {
-                print("Error parse JSON \(error)")
-                closure(error as NSError?, 0, nil)
-                return
-            }
             } else {
                 print("Data is NIL")
             }
             }.resume()
     }
+}
+//MARK:- Functions for DetailViewModule
+extension API_WRAPPER: API_WRAPPERForLoadLargeImageInput {
     
     func loadLargeImage (url : URL, closure: @escaping (UIImage?, NSError?) -> Void) {
         SDWebImageManager.shared().loadImage(with: url, options: .cacheMemoryOnly, progress: nil, completed: {(image, data, error, cache, finished, withURL) in
@@ -87,48 +85,37 @@ class API_WRAPPER: API_WRAPPERInput, API_WRAPPERForLoadLargeImageOutput {
                 print("Loading image is FALSE")
             }
         })
-      
-        
     }
     
-    
-    //    func getSizes (photo_id: String, closure: @escaping (CGSize?) -> Void) -> CGSize? {
-    //
-    //        let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=\(Constants.APIKey)&photo_id=\(photo_id)&format=json&nojsoncallback=?"
-    //
-    //        let url = URL(string: urlString)
-    //        let request = URLRequest(url: url!)
-    //        let object = URLSession.shared.dataTask(with: request) { (data, response, error) in
-    //            if error != nil {
-    //                print("Error fetch sizes: \(String(describing: error))")
-    //            }
-    //
-    //            do {
-    //                let results = try JSONSerialization.jsonObject(with: data!, options: []) as! [String : Any]
-    //
-    //                let resultsDictionary = results["sizes"] as? NSDictionary
-    //                let sizesArray = resultsDictionary!["size"] as! [NSDictionary]
-    //                for size in sizesArray {
-    //                    let label = size["label"] as! String
-    //                    if label == "Large" {
-    //                        let widthString = size["width"] as! NSString
-    //                        let heightString = size["height"] as! NSString
-    //
-    //                        let widthFloat = NumberFormatter().number(from: widthString as String)
-    //                        let heightFloat = NumberFormatter().number(from: heightString as String)
-    //                        let sizeCGSize = CGSize(width: Double(widthFloat!), height: Double(heightFloat!))
-    ////                            DispatchQueue.main.async {
-    ////                                sizeDown = height as! CGFloat
-    //                                closure(sizeCGSize)
-////                            }
-//
-//                    }
-//                }
-//            } catch let error as NSError {
-//                print("Error parse JSON (sizes) \(error)")
-//            }
-//        }
-//        object.resume()
-//        return nil
-//    }
+    func getSizes (photo_id: String, closure: @escaping (String?) -> Void) {
+        
+        let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=\(Constants.APIKey)&photo_id=\(photo_id)&format=json&nojsoncallback=?"
+        
+        let url = URL(string: urlString)
+        let request = URLRequest(url: url!)
+        let object = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if error != nil {
+                print("Error fetch sizes: \(String(describing: error))")
+            }
+            do {
+                let results = try JSONSerialization.jsonObject(with: data!, options: []) as! [String : Any]
+                
+                let resultsDictionary = results["sizes"] as? NSDictionary
+                let sizesArray = resultsDictionary!["size"] as! [NSDictionary]
+                for size in sizesArray {
+                    let label = size["label"] as! String
+                    if label == "Large" {
+                        closure("b")
+                        return
+                    } else {
+                        closure("c")
+                        return
+                    }
+                }
+            } catch let error as NSError {
+                print("Error parse JSON (sizes) \(error)")
+            }
+        }
+        object.resume()
+    }
 }

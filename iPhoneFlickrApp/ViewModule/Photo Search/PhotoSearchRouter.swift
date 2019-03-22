@@ -16,6 +16,7 @@ protocol PhotoSearchRouterInput: class {
 class PhotoSearchRouter: PhotoSearchRouterInput {
     
     weak var view: PhotoSearchViewController!
+    weak var presenter: PhotoSearchPresenter!
     
     func navigateToDetail() {
         view.performSegue(withIdentifier: "ShowDetailVC", sender: nil)
@@ -24,18 +25,15 @@ class PhotoSearchRouter: PhotoSearchRouterInput {
 
     func passData(segue: UIStoryboardSegue) {
         if segue.identifier == "ShowDetailVC" {
-        passDataToShow(segue: segue)
+        passDataToNextScene(segue: segue)
         }
     }
-
     
-    func passDataToShow(segue: UIStoryboardSegue) {
+    func passDataToNextScene(segue: UIStoryboardSegue) {
         if let selectedIndexPath = view.galleryCollectionView.indexPathsForSelectedItems?.first {
-            let selectedPhotoModel = view.photosArray[selectedIndexPath.row]
+            let selectedItem = view.photosArray[selectedIndexPath.row]
             let showDetailVC = segue.destination as! DetailViewController
-            
-            showDetailVC.presenter.selectedPhotoModel(model: selectedPhotoModel)
+            showDetailVC.interactor.configureModel(model: selectedItem)
         }
-
     }
 }

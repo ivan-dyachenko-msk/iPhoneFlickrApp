@@ -5,7 +5,7 @@
 //  Created by Ivan Dyachenko on 04/03/2019.
 //  Copyright © 2019 Ivan Dyachenko. All rights reserved.
 //
-
+/*
 import UIKit
 
 protocol RecentViewControllerOutput: class {
@@ -45,7 +45,7 @@ class RecentViewController: UIViewController, RecentViewControllerInput {
         RecentAssembly.shared.assembly(viewController: self)
         super.viewDidLoad()
         performSearch()
-//        recentTableViw.prefetchDataSource = self
+//        recentTableViw.prefetchDataSource = self as! UITableViewDataSourcePrefetching
 
     }
     
@@ -65,15 +65,15 @@ class RecentViewController: UIViewController, RecentViewControllerInput {
 
 }
 
-extension RecentViewController: UITableViewDelegate {
-    
-}
+//extension RecentViewController: UITableViewDelegate {
+//    
+//}
 
 extension RecentViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return photos.count
-        return 5
+        return photos.count
+//        return 5
         
     }
     
@@ -112,6 +112,16 @@ extension RecentViewController: UITableViewDataSource {
                 print("enter")
                 let model = photos[indexPath.row] as PhotoModel
                 let image = feedCell.loadImage(photoURL: futurePhotos[indexPath.row])
+                feedCell.recentImageView.sd_setImage(with: photos[indexPath.row].downloadSmallImage() as URL) {(image, error, cache, url) in
+                    feedCell.recentImageView.image = image
+                    for photo in self.photos {
+                    print(photo.downloadSmallImage())
+                    //            UIView.animate(withDuration: 1.0, animations: {
+                    //                cell.photoItem.alpha = 1.0
+                    //            })
+                    }
+                }
+//                return feedCell
                 if (feedCell.recentImageView.image?.size) != nil {
                 let k =  (feedCell.recentImageView.image?.size.width)! / ((feedCell.recentImageView.image?.size.height)!)
                 let trueheight = view.frame.size.width / k
@@ -120,7 +130,7 @@ extension RecentViewController: UITableViewDataSource {
                     print("leave")
 
                 recentTableViw.rowHeight = trueheight
-                    
+
                 }
                 print("IIII----- \(indexPath.row)")
             }
@@ -144,4 +154,4 @@ extension RecentViewController: UITableViewDataSource {
 //        }
 //    }
 //}
-
+*/

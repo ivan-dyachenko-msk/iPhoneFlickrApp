@@ -13,7 +13,7 @@ protocol PhotoSearchPresenterInput: PhotoSearchViewControllerOutput, PhotoSearch
 }
 
 protocol PhotoSearchPresenterOutput: class {
-    func displayEmptyRequest(vc: UIViewController)
+    func displayEmptyRequest(vc: UIViewController, searchBar: UISearchBar)
 }
 
 class PhotoSearchPresenter: PhotoSearchPresenterInput, PhotoSearchPresenterOutput {
@@ -27,26 +27,26 @@ class PhotoSearchPresenter: PhotoSearchPresenterInput, PhotoSearchPresenterOutpu
         print("PAGE IS ------ \(page)")
     }
     
-    func providedPhotos(_ photos: [PhotoModel]?, totalPages: Int) {
-        self.view.displayFetchedPhotos(photos, totalPages: totalPages)
+    func providedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
+        self.view.displayFetchedPhotos(photos, totalPhotos: totalPhotos)
         self.view.reloadData()
-        print("PAGE-------1")
+        print("PAGE-1")
     }
     
-    func providedPhotosNext(_ photos: [PhotoModel], totalPages: Int) {
-        self.view.displayFetchedPhotosNextPage(photos, totalPages: totalPages)
+    func providedPhotosNext(_ photos: [PhotoModel], totalPhotos: Int) {
+        self.view.displayFetchedPhotosNextPage(photos, totalPhotos: totalPhotos)
         self.view.reloadData()
-        print("PAGE-------NEXT)")
+        print("PAGE-NEXT)")
     }
     
-    func displayEmptyRequest(vc: UIViewController) {
+    func displayEmptyRequest(vc: UIViewController, searchBar: UISearchBar) {
         DispatchQueue.main.async {
             let alertController = UIAlertController(title: "Photo not found!", message: "change query", preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { action in
                 alertController.dismiss(animated: true, completion: nil)
+                searchBar.becomeFirstResponder()
             }) )
             vc.present(alertController, animated: true)
-            self.view.searchBar()
         }
     }
     
@@ -58,5 +58,4 @@ class PhotoSearchPresenter: PhotoSearchPresenterInput, PhotoSearchPresenterOutpu
     func passData(segue: UIStoryboardSegue) {
         self.router.passData(segue: segue)
     }
-
 }
