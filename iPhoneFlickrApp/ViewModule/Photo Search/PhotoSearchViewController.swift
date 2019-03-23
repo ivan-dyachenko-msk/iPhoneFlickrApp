@@ -51,14 +51,8 @@ class PhotoSearchViewController: UIViewController, PhotoSearchViewControllerInpu
         super.viewWillDisappear(animated)
     }
     
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-        UIView.animate(withDuration: 0.2, animations: {
-            self.navigationController?.navigationBar.barStyle = .blackTranslucent
-        })
-    }
-    
     override func viewDidLoad() {
+        print("SearchviewDidLoad")
         super.viewDidLoad()
         configureSearchBar()
         self.activityIndicator.isHidden = true
@@ -113,9 +107,6 @@ extension PhotoSearchViewController: UICollectionViewDataSource {
 
         cell.photoItem.sd_setImage(with: photosArray[indexPath.row].downloadSmallImage() as URL) {(image, error, cache, url) in
             cell.photoItem.image = image
-//            UIView.animate(withDuration: 1.0, animations: {
-//                cell.photoItem.alpha = 1.0
-//            })
         }
         return cell
     }

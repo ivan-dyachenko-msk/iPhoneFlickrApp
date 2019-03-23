@@ -21,8 +21,9 @@ protocol API_WRAPPERForLoadLargeImageInput {
     func getSizes (photo_id: String, closure: @escaping (String?) -> Void)
 }
 
+//MARK:- Common functions
 class API_WRAPPER: API_WRAPPERInput {
-    
+  
     func fetchPhotos (urlTo: String, searchText: String?, page: Int, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void {
         let photoURL = urlTo
         let url = URL(string: photoURL)
@@ -72,6 +73,7 @@ class API_WRAPPER: API_WRAPPERInput {
             }.resume()
     }
 }
+
 //MARK:- Functions for DetailViewModule
 extension API_WRAPPER: API_WRAPPERForLoadLargeImageInput {
     

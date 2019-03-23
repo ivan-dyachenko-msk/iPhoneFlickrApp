@@ -12,10 +12,7 @@ class PhotoSearchItem: UICollectionViewCell {
     
     @IBOutlet weak var photoItem: UIImageView!
     
-    
     func loadImage (photoURL: URL) {
         photoItem?.sd_setImage(with: photoURL)
     }
-    
-    
 }

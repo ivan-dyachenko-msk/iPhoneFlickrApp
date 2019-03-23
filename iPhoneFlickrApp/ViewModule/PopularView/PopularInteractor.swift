@@ -6,7 +6,7 @@
 //  Copyright © 2019 Ivan Dyachenko. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 protocol PopularInteractorProtocolInput: PopularViewControllerProtocolOutput {
     
@@ -14,6 +14,8 @@ protocol PopularInteractorProtocolInput: PopularViewControllerProtocolOutput {
 
 protocol PopularInteractorProtocolOutput: class {
     func providedPhotos(photos: [PhotoModel], totalPhotos: Int)
+    func passData(segue: UIStoryboardSegue)
+    func goToDetailScreen()
 }
 
 class PopularInteractor: PopularInteractorProtocolInput {
@@ -26,10 +28,9 @@ class PopularInteractor: PopularInteractorProtocolInput {
     func sendPopPhotosFromInteractor(page: Int) {
         apiWrapper.fetchPhotos(urlTo: Constants.photoPopularURL(page: page), searchText: nil, page: page, closure: {(error, totalPhotos, photos) in
             if let photo = photos {
-                if page == 1 && (photos!.count) <= (totalPhotos) {
+                if photos!.count < (totalPhotos) {
                     self.presenter.providedPhotos(photos: photo, totalPhotos: totalPhotos)
                 } else {
-//                    self.presenter.providedPhotosNext(photo, totalPhotos: totalPhotos)
                 }
             } else if let error = error {
                 print(error)
@@ -37,5 +38,11 @@ class PopularInteractor: PopularInteractorProtocolInput {
         })
     }
     
+    func passData(segue: UIStoryboardSegue) {
+        presenter.passData(segue: segue)
+    }
     
+    func goToDetailScreen() {
+        self.presenter.goToDetailScreen()
+    }
 }

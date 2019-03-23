@@ -45,16 +45,14 @@ class DetailViewController: UIViewController, DetailViewControllerProtocolInput 
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        UIView.animate(withDuration: 0.5, animations: {
+        UIView.animate(withDuration: 0.2, animations: {
         self.navigationController?.navigationBar.barStyle = .black
         })
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-//        if (self.isMovingFromParent) {
             UIDevice.current.setValue(Int(UIInterfaceOrientation.portrait.rawValue), forKey: "orientation")
-//        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {

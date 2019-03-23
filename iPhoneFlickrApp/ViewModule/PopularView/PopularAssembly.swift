@@ -16,10 +16,13 @@ class PopularAssembly {
         let dataManager: API_WRAPPERInput = API_WRAPPER()
         let presenter = PopularPresenter()
         let interactor = PopularInteractor()
+        let router = PopularRouter()
         viewController.interactor = interactor
         presenter.view = viewController
+        presenter.router = router
         interactor.presenter = presenter
         interactor.apiWrapper = dataManager
+        router.view = viewController
     }
 
 }

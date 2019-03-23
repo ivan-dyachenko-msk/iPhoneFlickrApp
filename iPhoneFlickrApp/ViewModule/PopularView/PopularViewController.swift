@@ -14,12 +14,13 @@ protocol PopularViewControllerProtocolInput: PopularPresenterProtocolOutput {
 
 protocol PopularViewControllerProtocolOutput: class {
     func sendPopPhotosFromInteractor(page: Int)
+    func passData(segue: UIStoryboardSegue)
+    func goToDetailScreen()
 }
 
 class PopularViewController: UIViewController, PopularViewControllerProtocolInput {
     
     @IBOutlet weak var popularCollectionView: UICollectionView!
-    
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -27,28 +28,43 @@ class PopularViewController: UIViewController, PopularViewControllerProtocolInpu
     }
     var photos: [PhotoModel] = []
     var currentPage = 1
+    var totalPhotos: Int?
     var interactor: PopularInteractorProtocolInput!
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        UIView.animate(withDuration: 0.2, animations: {
+            self.navigationController?.navigationBar.barStyle = .default
+            self.navigationController?.navigationBar.prefersLargeTitles = true
+        })
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("PopularviewDidLoad")
         interactor.sendPopPhotosFromInteractor(page: currentPage)
     }
     
-    func displayPopularPhotos(photos: [PhotoModel]?, totalPhotos: Int) {
-        if photos != nil && totalPhotos != 0 {
-            self.photos.append(contentsOf: photos!)
-//            self.totalPhotos = totalPhotos
-            popularCollectionView.reloadData()
-        }
-        else {
-            print("No phioto")
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        interactor.passData(segue: segue)
+    }
+    
+    func reloadData() {
+        DispatchQueue.main.async {
+        self.popularCollectionView.reloadData()
         }
     }
 }
 
+//MARK:- CollectionView Delegate
 extension PopularViewController: UICollectionViewDelegate {
-    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        self.interactor.goToDetailScreen()
+    }
 }
 
+//MARK:- CollectionView DataSource
 extension PopularViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return photos.count
@@ -57,16 +73,16 @@ extension PopularViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PopularItem", for: indexPath) as! PopularItem
-//        if indexPath.row % 0 {
-//random cells
-//        }
         cell.popularItem.layer.cornerRadius = 10
         cell.popularItem.layer.masksToBounds = true
-        cell.popularItem.sd_setImage(with: photos[indexPath.row].downloadSmallImage() as URL) {(image, error, cache, url) in
+        cell.titleLabel.layer.cornerRadius = 7
+        cell.titleLabel.layer.masksToBounds = true
+        if indexPath.row == photos.count - 6 && (self.totalPhotos!) > photos.count {
+            currentPage += 1
+            interactor.sendPopPhotosFromInteractor(page: currentPage)        }
+        cell.popularItem.sd_setImage(with: photos[indexPath.row].downloadMediumImage() as URL) {(image, error, cache, url) in
             cell.popularItem.image = image
-            //            UIView.animate(withDuration: 1.0, animations: {
-            //                cell.photoItem.alpha = 1.0
-            //            })
+            cell.titleLabel.text = self.photos[indexPath.row].title
         }
         return cell
     }

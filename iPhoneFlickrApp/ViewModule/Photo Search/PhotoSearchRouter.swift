@@ -16,7 +16,6 @@ protocol PhotoSearchRouterInput: class {
 class PhotoSearchRouter: PhotoSearchRouterInput {
     
     weak var view: PhotoSearchViewController!
-    weak var presenter: PhotoSearchPresenter!
     
     func navigateToDetail() {
         view.performSegue(withIdentifier: "ShowDetailVC", sender: nil)

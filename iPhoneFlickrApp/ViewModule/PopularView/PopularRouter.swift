@@ -6,8 +6,33 @@
 //  Copyright © 2019 Ivan Dyachenko. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
-class PopularRouter {
-    
+protocol PopularRouterInput: class {
+    func navigateToDetail()
+    func passData(segue: UIStoryboardSegue)
 }
+
+class PopularRouter: PopularRouterInput {
+    
+    weak var view: PopularViewController!
+    
+    func navigateToDetail() {
+        view.performSegue(withIdentifier: "ShowDetailVCFromPopular", sender: nil)
+    }
+    
+    func passData(segue: UIStoryboardSegue) {
+        if segue.identifier == "ShowDetailVCFromPopular" {
+            passDataToNextScene(segue: segue)
+        }
+    }
+    
+    func passDataToNextScene(segue: UIStoryboardSegue) {
+        if let selectedIndexPath = view.popularCollectionView.indexPathsForSelectedItems?.first {
+            let selectedItem = view.photos[selectedIndexPath.row]
+            let showDetailVC = segue.destination as! DetailViewController
+            showDetailVC.interactor.configureModel(model: selectedItem)
+        }
+    }
+}
+

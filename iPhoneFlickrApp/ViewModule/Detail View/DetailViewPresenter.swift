@@ -24,9 +24,4 @@ class DetailViewPresenter: DetailViewPresenterProtocolInput {
         self.view.presentLoadedImage(image: photo)
         self.view.buttonUpload()
     }
-    
-//    func orientation() {
-//        let landscape = UIInterfaceOrientation.landscapeLeft
-//        UIDevice.current.setValue(landscape, forKey: "orientation")
-//    }
 }

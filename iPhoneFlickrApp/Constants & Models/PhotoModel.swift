@@ -26,7 +26,7 @@ class PhotoModel {
     }
     
     func downloadSmallImage() -> URL {
-        return imageURL()
+        return imageURL(size: "m")
     }
     
     func downloadMediumImage() -> URL {
@@ -37,7 +37,7 @@ class PhotoModel {
         return imageURL(size: size)
     }
     
-    private func imageURL (size: String = "m") -> URL {
+    private func imageURL (size: String) -> URL {
         
         return URL(string: "https://farm\(farm_id).staticflickr.com/\(server_id)/\(photo_id)_\(secret)_\(size).jpg")!
     }

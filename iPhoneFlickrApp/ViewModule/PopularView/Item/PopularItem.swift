@@ -10,12 +10,11 @@ import UIKit
 
 class PopularItem: UICollectionViewCell {
     
-    
     @IBOutlet weak var popularItem: UIImageView!
+    
+    @IBOutlet weak var titleLabel: UILabel!
     
     func loadImage (photoURL: URL) {
         popularItem?.sd_setImage(with: photoURL)
     }
-    
-    
 }

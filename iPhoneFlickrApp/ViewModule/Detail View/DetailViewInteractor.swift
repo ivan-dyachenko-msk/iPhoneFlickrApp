@@ -24,6 +24,7 @@ class DetailViewInteractor: DetailInteractorProtocolInput {
     
     func configureModel(model: PhotoModel) {
         self.model = model
+        print(model)
     }
     
     func fetchPhotosFromApi() {
