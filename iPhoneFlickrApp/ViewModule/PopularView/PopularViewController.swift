@@ -26,9 +26,10 @@ class PopularViewController: UIViewController, PopularViewControllerProtocolInpu
         super.awakeFromNib()
         PopularAssembly.shared.assembly(viewController: self)
     }
-    var photos: [PhotoModel] = []
+    var photosArray: [PhotoModel] = []
     var currentPage = 1
     var totalPhotos: Int?
+    var image: [UIImage?] = []
     var interactor: PopularInteractorProtocolInput!
     
     override func viewDidAppear(_ animated: Bool) {
@@ -37,23 +38,15 @@ class PopularViewController: UIViewController, PopularViewControllerProtocolInpu
             self.navigationController?.navigationBar.barStyle = .default
             self.navigationController?.navigationBar.prefersLargeTitles = true
         })
-        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("PopularviewDidLoad")
         interactor.sendPopPhotosFromInteractor(page: currentPage)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         interactor.passData(segue: segue)
-    }
-    
-    func reloadData() {
-        DispatchQueue.main.async {
-        self.popularCollectionView.reloadData()
-        }
     }
 }
 
@@ -67,7 +60,7 @@ extension PopularViewController: UICollectionViewDelegate {
 //MARK:- CollectionView DataSource
 extension PopularViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photos.count
+        return photosArray.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -77,15 +70,49 @@ extension PopularViewController: UICollectionViewDataSource {
         cell.popularItem.layer.masksToBounds = true
         cell.titleLabel.layer.cornerRadius = 7
         cell.titleLabel.layer.masksToBounds = true
-        if indexPath.row == photos.count - 6 && (self.totalPhotos!) > photos.count {
-            currentPage += 1
-            interactor.sendPopPhotosFromInteractor(page: currentPage)        }
-        cell.popularItem.sd_setImage(with: photos[indexPath.row].downloadMediumImage() as URL) {(image, error, cache, url) in
+//        if indexPath.row == photosArray.count - 20 && (self.totalPhotos!) > photosArray.count {
+//            currentPage += 1
+//            DispatchQueue.main.async {
+//            self.interactor.sendPopPhotosFromInteractor(page: self.currentPage)
+//            }
+//        }
+        cell.popularItem.sd_setImage(with: photosArray[indexPath.row].downloadMediumImage() as URL) {(image, error, cache, url) in
+            self.image.append(image!)
+            (cell.popularItem.alpha, cell.titleLabel.alpha) = (0, 0)
+            cell.titleLabel.alpha = 0
+            UIView.animate(withDuration: 0.2, animations: {
             cell.popularItem.image = image
-            cell.titleLabel.text = self.photos[indexPath.row].title
+            cell.titleLabel.text = self.photosArray[indexPath.row].title
+                (cell.popularItem.alpha, cell.titleLabel.alpha) = (1.0, 0.7)
+            })
         }
         return cell
     }
+    
+    func insertItems(photo: PhotoModel) {
+        DispatchQueue.main.async {
+            self.popularCollectionView.performBatchUpdates({
+                let indexPath = IndexPath(row: self.photosArray.count, section: 0)
+                self.photosArray.append(photo)
+                self.popularCollectionView.insertItems(at: [indexPath])
+                print(indexPath)
+                
+            }, completion: nil)
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+
+//        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PopularItem", for: indexPath) as! PopularItem
+        if indexPath.row == photosArray.count - 20 && (self.totalPhotos!) > photosArray.count {
+            currentPage += 1
+            print("willDisplay")
+            DispatchQueue.main.async {
+                self.interactor.sendPopPhotosFromInteractor(page: self.currentPage)
+            }
+        }
+    }
+    
 }
 
 //MARK:- FlowLayout
@@ -95,7 +122,7 @@ extension PopularViewController: UICollectionViewDelegateFlowLayout {
         var itemSize : CGSize
         let length = (UIScreen.main.bounds.width) / 2 - 12
         
-        if indexPath.row < photos.count {
+        if indexPath.row < photosArray.count {
             itemSize = CGSize(width: length, height: length)
         } else {
             itemSize = CGSize(width: popularCollectionView.bounds.width, height: 50.0)
@@ -103,8 +130,8 @@ extension PopularViewController: UICollectionViewDelegateFlowLayout {
         return itemSize
     }
     
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        self.navigationItem.hidesSearchBarWhenScrolling = true
-    }
+//    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+//        self.navigationItem.hidesSearchBarWhenScrolling = true
+//    }
 }
 

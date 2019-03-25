@@ -13,9 +13,9 @@ protocol PopularPresenterProtocolInput: PopularInteractorProtocolOutput {
 }
 
 protocol PopularPresenterProtocolOutput: class {
-    func reloadData()
-    var photos: [PhotoModel] { get set }
+    func insertItems(photo: PhotoModel)
     var totalPhotos: Int? { get set }
+     var image: [UIImage?] { get }
 }
 
 class PopularPresenter: PopularPresenterProtocolInput {
@@ -28,9 +28,10 @@ class PopularPresenter: PopularPresenterProtocolInput {
     }
     
     func saveFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
-        self.view.photos.append(contentsOf: photos!)
         self.view.totalPhotos = totalPhotos
-        self.view.reloadData()
+        for photo in photos! {
+        self.view.insertItems(photo: photo)
+        }
     }
     
     func goToDetailScreen() {
@@ -39,5 +40,9 @@ class PopularPresenter: PopularPresenterProtocolInput {
     
     func passData(segue: UIStoryboardSegue) {
         self.router.passData(segue: segue)
+    }
+    
+    func sdSetImage(item: PopularItem) {
+        item.loadImage(photoURL: <#T##URL#>)
     }
 }

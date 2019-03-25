@@ -36,6 +36,8 @@ class PopularInteractor: PopularInteractorProtocolInput {
                 print(error)
             }
         })
+        
+        
     }
     
     func passData(segue: UIStoryboardSegue) {

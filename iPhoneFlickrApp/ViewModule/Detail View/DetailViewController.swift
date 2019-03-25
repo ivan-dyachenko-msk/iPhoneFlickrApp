@@ -19,6 +19,7 @@ class DetailViewController: UIViewController, DetailViewControllerProtocolInput 
 
     @IBOutlet weak var detailImage: UIImageView!
     @objc func canRotate() -> Void {}
+    var imageFromPreviousVC: UIImage?
     var interactor: DetailInteractorProtocolInput!
     
     override func awakeFromNib() {
@@ -28,6 +29,7 @@ class DetailViewController: UIViewController, DetailViewControllerProtocolInput 
     override func viewDidLoad() {
         self.navigationController?.navigationBar.prefersLargeTitles = false
         self.interactor.fetchPhotosFromApi()
+//        self.detailImage.image = imageFromPreviousVC
         super.viewDidLoad()
     }
     
@@ -60,7 +62,21 @@ class DetailViewController: UIViewController, DetailViewControllerProtocolInput 
     }
 
     func presentLoadedImage(image: UIImage) {
-        self.detailImage.image = image
+//        imageFromPreviousVC = image
+//        print(imageFromPreviousVC)
+//        if image != nil {
+//        detailImage.image = imageFromPreviousVC
+//        } else {
+//            print("Image in DetailVC is nil")
+//        }
+    }
+
+    func present() {
+        detailImage.alpha = 0
+        detailImage.image = imageFromPreviousVC
+        UIView.animate(withDuration: 0.2, animations: {
+            self.detailImage.alpha = 1.0
+        })
     }
     
     func buttonUpload() {

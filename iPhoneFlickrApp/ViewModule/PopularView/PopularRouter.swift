@@ -29,9 +29,12 @@ class PopularRouter: PopularRouterInput {
     
     func passDataToNextScene(segue: UIStoryboardSegue) {
         if let selectedIndexPath = view.popularCollectionView.indexPathsForSelectedItems?.first {
-            let selectedItem = view.photos[selectedIndexPath.row]
+            let selectedItem = view.photosArray[selectedIndexPath.row]
+            let image = view.image[selectedIndexPath.row]
             let showDetailVC = segue.destination as! DetailViewController
             showDetailVC.interactor.configureModel(model: selectedItem)
+            showDetailVC.imageFromPreviousVC = image
+//            print(showDetailVC.imageFromPreviousVC)
         }
     }
 }

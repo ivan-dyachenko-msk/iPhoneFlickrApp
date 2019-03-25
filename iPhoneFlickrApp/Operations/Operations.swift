@@ -8,6 +8,23 @@
 
 import Foundation
 
-class Operations: OperationQueue {
+class SmallImageLoadOperation: NSObject {
+    
+    let testOperation = OperationQueue()
+    let first = { print("hi") }
+    let second = { print("there") }
+    
+    
+    public func oper() {
+        testOperation.maxConcurrentOperationCount = 1
+        testOperation.addOperation {
+            self.first()
+        }
+        testOperation.addOperation {
+//            if testOperation.
+            self.first()
+            self.second()
+        }
+    }
     
 }

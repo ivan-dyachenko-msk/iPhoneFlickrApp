@@ -24,20 +24,10 @@ class DetailViewInteractor: DetailInteractorProtocolInput {
     
     func configureModel(model: PhotoModel) {
         self.model = model
-        print(model)
     }
     
     func fetchPhotosFromApi() {
-        self.apiWrapper.loadLargeImage(url: model.downloadSmallImage(), closure: {(image, error) in
-            if let image = image {
-                self.presenter.getLoadedImagesFromInteractor(photo: image)
-            }
-            else {
-                let error = error!
-                print("No images from API -- error: \(error as NSError)")
-            }
-        })
-        apiWrapper.getSizes(photo_id: self.model.photo_id, closure: { closure in
+        self.apiWrapper.getSizes(photo_id: self.model.photo_id, closure: { closure in
             self.apiWrapper.loadLargeImage(url: self.model.downloadLargeImage(size: closure!), closure: {(image, error) in
                 if let image = image {
                     self.presenter.getLoadedImagesFromInteractor(photo: image)
@@ -50,3 +40,4 @@ class DetailViewInteractor: DetailInteractorProtocolInput {
         })
     }
 }
+
