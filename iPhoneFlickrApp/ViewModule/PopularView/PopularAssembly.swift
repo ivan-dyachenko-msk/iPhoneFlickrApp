@@ -13,15 +13,16 @@ class PopularAssembly {
     static var shared = PopularAssembly()
     
     func assembly(viewController: PopularViewController) {
-        let dataManager: API_WRAPPERInput = API_WRAPPER()
+        let dataManager = API_WRAPPER()
         let presenter = PopularPresenter()
         let interactor = PopularInteractor()
         let router = PopularRouter()
         viewController.interactor = interactor
+        viewController.router = router
         presenter.view = viewController
-        presenter.router = router
         interactor.presenter = presenter
         interactor.apiWrapper = dataManager
+        interactor.apiWrapperLoadImages = dataManager
         router.view = viewController
     }
 

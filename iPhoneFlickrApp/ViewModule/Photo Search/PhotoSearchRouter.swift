@@ -30,9 +30,11 @@ class PhotoSearchRouter: PhotoSearchRouterInput {
     
     func passDataToNextScene(segue: UIStoryboardSegue) {
         if let selectedIndexPath = view.galleryCollectionView.indexPathsForSelectedItems?.first {
-            let selectedItem = view.photosArray[selectedIndexPath.row]
+            let selectedItem = view.imagesArray[selectedIndexPath.row]
+            let image = view.imagesArray[selectedIndexPath.row].image
             let showDetailVC = segue.destination as! DetailViewController
             showDetailVC.interactor.configureModel(model: selectedItem)
+            showDetailVC.imageFromPreviousVC = image
         }
     }
 }

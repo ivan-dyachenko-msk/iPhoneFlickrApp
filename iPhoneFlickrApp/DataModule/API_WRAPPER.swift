@@ -10,21 +10,21 @@ import Foundation
 import SDWebImage
 
 protocol API_WRAPPERInput: class {
-    func fetchPhotos (urlTo: String, searchText: String?, page: Int, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void
+    func fetchPhotos (urlTo: String, searchText: String?, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void
 }
 
 protocol API_WRAPPEROutput: PhotoSearchInteractorInput {
 }
 
-protocol API_WRAPPERForLoadLargeImageInput {
+@objc protocol API_WRAPPERForLoadLargeImageInput {
     func loadLargeImage (url : URL, closure: @escaping (UIImage?, NSError?) -> Void)
-    func getSizes (photo_id: String, closure: @escaping (String?) -> Void)
+    @objc optional func getSizes (photo_id: String, closure: @escaping (String?) -> Void)
 }
 
 //MARK:- Common functions
 class API_WRAPPER: API_WRAPPERInput {
-  
-    func fetchPhotos (urlTo: String, searchText: String?, page: Int, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void {
+    
+    func fetchPhotos (urlTo: String, searchText: String?, closure: @escaping (Error?, Int, [PhotoModel]?) -> Void) -> Void {
         let photoURL = urlTo
         let url = URL(string: photoURL)
         let request = URLRequest(url: url!)
@@ -38,6 +38,7 @@ class API_WRAPPER: API_WRAPPERInput {
                     let results = try JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any]
                     if let resultDictionary = results!["photos"] as? NSDictionary {
                         var totalPhotosCount : Int?
+                        var totalPages: Int?
                         
                         if resultDictionary["total"] as? Int != nil {
                             totalPhotosCount = resultDictionary["total"] as? Int
@@ -49,16 +50,17 @@ class API_WRAPPER: API_WRAPPERInput {
                             print("Some error parse TOTAL in API-WRAPPER")
                         }
                         
+                        
                         if totalPhotosCount == 0 {
                             closure(nil, Int(totalPhotosCount!), nil)
                         } else {
                             let photosArray = resultDictionary["photo"] as! [NSDictionary]
                             let flickrPhotos: [PhotoModel] = photosArray.map( {(photoDictionary) -> PhotoModel in
-                                let flickrPhoto = PhotoModel(photo_id: photoDictionary["id"] as! String, farm_id: photoDictionary["farm"] as! Int, secret: photoDictionary["secret"] as! String, server_id: photoDictionary["server"] as! String, title: photoDictionary["title"] as! String)
+                                let flickrPhoto = PhotoModel(photo_id: photoDictionary["id"] as! String, farm_id: photoDictionary["farm"] as! Int, secret: photoDictionary["secret"] as! String, server_id: photoDictionary["server"] as! String, title: photoDictionary["title"] as! String, image: nil)
                                 return flickrPhoto
                             })
                             DispatchQueue.main.async {
-                                closure(nil, Int(totalPhotosCount!), flickrPhotos)
+                                closure(nil, ((resultDictionary["pages"] as? Int)!), flickrPhotos)
                             }
                         }
                     }
@@ -74,21 +76,21 @@ class API_WRAPPER: API_WRAPPERInput {
     }
 }
 
-//MARK:- Functions for DetailViewModule
+//MARK:- Download images
 extension API_WRAPPER: API_WRAPPERForLoadLargeImageInput {
     
     func loadLargeImage (url : URL, closure: @escaping (UIImage?, NSError?) -> Void) {
         SDWebImageManager.shared().loadImage(with: url, options: .cacheMemoryOnly, progress: nil, completed: {(image, data, error, cache, finished, withURL) in
             if image != nil && finished {
                 closure(image, nil)
-                print("Loading image is OK")
             } else {
                 closure(nil, error! as NSError)
                 print("Loading image is FALSE")
+                return
             }
         })
     }
-    
+
     func getSizes (photo_id: String, closure: @escaping (String?) -> Void) {
         
         let urlString = "https://api.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=\(Constants.APIKey)&photo_id=\(photo_id)&format=json&nojsoncallback=?"
@@ -116,6 +118,7 @@ extension API_WRAPPER: API_WRAPPERForLoadLargeImageInput {
                 }
             } catch let error as NSError {
                 print("Error parse JSON (sizes) \(error)")
+                return
             }
         }
         object.resume()

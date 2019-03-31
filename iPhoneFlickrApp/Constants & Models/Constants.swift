@@ -14,15 +14,15 @@ struct Constants {
     static var tagForSearch = ""
     
     static func photoSearchURL(page: Int) -> String {
-        return "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Constants.APIKey)&tags=\(Constants.tagForSearch)&page=\(page)&format=json&nojsoncallback=1"
+        return "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Constants.APIKey)&tags=\(Constants.tagForSearch)&per_page=30&page=\(page)&format=json&nojsoncallback=1"
     }
     
     static func photoRecentURL(page: Int) -> String {
-        return "https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=\(Constants.APIKey)&page=\(page)&format=json&nojsoncallback=1"
+        return "https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=\(Constants.APIKey)&per_page=30&page=\(page)&format=json&nojsoncallback=1"
     }
     
     static func photoPopularURL(page: Int) -> String {
-        return "https://www.flickr.com/services/rest?method=flickr.interestingness.getList&api_key=\(Constants.APIKey)&per_page=100&page=\(page)&format=json&nojsoncallback=1"
+        return "https://www.flickr.com/services/rest?method=flickr.interestingness.getList&api_key=\(Constants.APIKey)&per_page=30&page=\(page)&format=json&nojsoncallback=1"
 
     }
 }

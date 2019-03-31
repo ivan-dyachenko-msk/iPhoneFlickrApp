@@ -6,56 +6,43 @@
 //  Copyright © 2019 Ivan Dyachenko. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
-protocol PhotoSearchPresenterInput: PhotoSearchViewControllerOutput, PhotoSearchInteractorOutput {
+protocol PhotoSearchPresenterInput: PhotoSearchInteractorOutput {
     
 }
 
 protocol PhotoSearchPresenterOutput: class {
-    func displayEmptyRequest(vc: UIViewController, searchBar: UISearchBar)
+    func insertItems(photos: PhotoModel)
+    func displayEmptyRequest()
+    var totalPages: Int { get set }
+    var count: Int { get set }
 }
 
-class PhotoSearchPresenter: PhotoSearchPresenterInput, PhotoSearchPresenterOutput {
+class PhotoSearchPresenter: PhotoSearchPresenterInput {
     
     weak var view: PhotoSearchViewControllerInput!
-    var interactor: PhotoSearchInteractorInput!
-    var router: PhotoSearchRouterInput!
     
-    func fetchPhotoFromPresenter(searchText: String, page: Int) {
-        interactor.fetchPhotosFromInteractor(searchText: searchText, page: page)
-        print("PAGE IS ------ \(page)")
-    }
-    
-    func providedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
-        self.view.displayFetchedPhotos(photos, totalPhotos: totalPhotos)
-        self.view.reloadData()
-        print("PAGE-1")
-    }
-    
-    func providedPhotosNext(_ photos: [PhotoModel], totalPhotos: Int) {
-        self.view.displayFetchedPhotosNextPage(photos, totalPhotos: totalPhotos)
-        self.view.reloadData()
-        print("PAGE-NEXT)")
-    }
-    
-    func displayEmptyRequest(vc: UIViewController, searchBar: UISearchBar) {
-        DispatchQueue.main.async {
-            let alertController = UIAlertController(title: "Photo not found!", message: "change query", preferredStyle: .alert)
-            alertController.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { action in
-                alertController.dismiss(animated: true, completion: nil)
-                searchBar.becomeFirstResponder()
-            }) )
-            vc.present(alertController, animated: true)
+    func providedImages(model: PhotoModel, photosCount: Int) {
+        if photosCount != 0 {
+            self.view.insertItems(photos: model)
+        } else {
+            self.view.displayEmptyRequest()
         }
     }
+//    func providedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
+//        self.view.displayFetchedPhotos(photos, totalPhotos: totalPhotos)
+//        print("PAGE-1")
+//    }
+//
+//    func providedPhotosNext(_ photos: [PhotoModel], totalPhotos: Int) {
+//        self.view.displayFetchedPhotosNextPage(photos, totalPhotos: totalPhotos)
+//        print("PAGE-NEXT)")
+//    }
     
-//MARK:- Segue to DetailVC
-    func goToDetailScreen() {
-        self.router.navigateToDetail()
-    }
-    
-    func passData(segue: UIStoryboardSegue) {
-        self.router.passData(segue: segue)
+    func setUpCounts(totalPages: Int, countImages: Int) {
+        self.view.count = countImages
+        self.view.totalPages = totalPages
+        print(countImages, totalPages)
     }
 }

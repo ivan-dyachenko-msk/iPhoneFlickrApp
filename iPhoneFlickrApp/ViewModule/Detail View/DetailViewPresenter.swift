@@ -12,7 +12,6 @@ protocol DetailViewPresenterProtocolInput: DetailInteractorProtocolOutput {
 }
 
 protocol DetailViewPresenterProtocolOutput: class {
-    func present()
     func presentLoadedImage(image: UIImage)
     func buttonUpload()
 }
@@ -23,11 +22,6 @@ class DetailViewPresenter: DetailViewPresenterProtocolInput {
     
     func getLoadedImagesFromInteractor(photo: UIImage) {
         self.view.buttonUpload()
-        self.view.present()
         self.view.presentLoadedImage(image: photo)
-    }
-    
-    func get() {
-        self.view.present()
     }
 }

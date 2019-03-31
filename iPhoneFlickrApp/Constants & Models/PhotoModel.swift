@@ -16,13 +16,15 @@ class PhotoModel {
     let secret: String
     let server_id: String
     let title: String
+    let image: UIImage?
     
-    init(photo_id: String, farm_id: Int, secret: String, server_id: String, title: String) {
+    init(photo_id: String, farm_id: Int, secret: String, server_id: String, title: String, image: UIImage?) {
         self.photo_id = photo_id
         self.farm_id = farm_id
         self.secret = secret
         self.server_id = server_id
         self.title = title
+        self.image = image
     }
     
     func downloadSmallImage() -> URL {

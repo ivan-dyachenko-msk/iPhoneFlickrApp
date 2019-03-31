@@ -18,23 +18,25 @@ class PopularRouter: PopularRouterInput {
     weak var view: PopularViewController!
     
     func navigateToDetail() {
+        
         view.performSegue(withIdentifier: "ShowDetailVCFromPopular", sender: nil)
     }
     
     func passData(segue: UIStoryboardSegue) {
+        
         if segue.identifier == "ShowDetailVCFromPopular" {
             passDataToNextScene(segue: segue)
         }
     }
     
     func passDataToNextScene(segue: UIStoryboardSegue) {
+        
         if let selectedIndexPath = view.popularCollectionView.indexPathsForSelectedItems?.first {
-            let selectedItem = view.photosArray[selectedIndexPath.row]
-            let image = view.image[selectedIndexPath.row]
+            let selectedItem = view.imagesArray[selectedIndexPath.row]
+            let image = view.imagesArray[selectedIndexPath.row].image
             let showDetailVC = segue.destination as! DetailViewController
             showDetailVC.interactor.configureModel(model: selectedItem)
             showDetailVC.imageFromPreviousVC = image
-//            print(showDetailVC.imageFromPreviousVC)
         }
     }
 }

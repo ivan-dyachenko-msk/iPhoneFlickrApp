@@ -6,43 +6,28 @@
 //  Copyright © 2019 Ivan Dyachenko. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 protocol PopularPresenterProtocolInput: PopularInteractorProtocolOutput {
     
 }
 
 protocol PopularPresenterProtocolOutput: class {
-    func insertItems(photo: PhotoModel)
-    var totalPhotos: Int? { get set }
-     var image: [UIImage?] { get }
+    func insertItems(photos: PhotoModel)
+    var totalPages: Int { get set }
+    var count: Int { get set }
 }
 
 class PopularPresenter: PopularPresenterProtocolInput {
 
     weak var view: PopularViewControllerProtocolInput!
-    var router: PopularRouterInput!
     
-    func providedPhotos(photos: [PhotoModel], totalPhotos: Int) {
-        saveFetchedPhotos(photos, totalPhotos: totalPhotos)
+    func providedImages(model: PhotoModel) {
+        self.view.insertItems(photos: model)
     }
     
-    func saveFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
-        self.view.totalPhotos = totalPhotos
-        for photo in photos! {
-        self.view.insertItems(photo: photo)
-        }
-    }
-    
-    func goToDetailScreen() {
-        self.router.navigateToDetail()
-    }
-    
-    func passData(segue: UIStoryboardSegue) {
-        self.router.passData(segue: segue)
-    }
-    
-    func sdSetImage(item: PopularItem) {
-        item.loadImage(photoURL: <#T##URL#>)
+    func setUpCounts(totalPages: Int, countImages: Int) {
+        self.view.count = countImages
+        self.view.totalPages = totalPages
     }
 }

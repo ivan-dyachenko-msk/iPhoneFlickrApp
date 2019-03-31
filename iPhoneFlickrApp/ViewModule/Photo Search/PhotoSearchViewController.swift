@@ -8,26 +8,25 @@
 
 import UIKit
 
-
-protocol PhotoSearchViewControllerOutput: class {
-    func fetchPhotoFromPresenter(searchText: String, page: Int)
-    func goToDetailScreen()
-    func passData(segue: UIStoryboardSegue)
+protocol PhotoSearchViewControllerInput: PhotoSearchPresenterOutput {
 }
 
-protocol PhotoSearchViewControllerInput: class {
-    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int)
-    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPhotos: Int)
-    func reloadData()
+protocol PhotoSearchViewControllerOutput: class {
+    func sendRecentPhotosFromInteractor()
+    func sendSearchPhotosFromInteractor()
+    func load(needToLoad: Bool)
+    var page: Int { get set }
 }
 
 class PhotoSearchViewController: UIViewController, PhotoSearchViewControllerInput {
     
+    var totalPages: Int = 0
+    var count: Int = 0
     var currentPage = 1
     var totalPhotos = 0
-    var photosArray: [PhotoModel] = []
-    var presenter: PhotoSearchViewControllerOutput!
-    var presenterOutput: PhotoSearchPresenterOutput!
+    var imagesArray: [PhotoModel] = []
+    var interactor: PhotoSearchInteractorInput!
+    var router: PhotoSearchRouterInput!
     let searchController = UISearchController(searchResultsController: nil)
     
     @IBOutlet weak var galleryCollectionView: UICollectionView!
@@ -47,48 +46,15 @@ class PhotoSearchViewController: UIViewController, PhotoSearchViewControllerInpu
         })
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-    }
-    
     override func viewDidLoad() {
-        print("SearchviewDidLoad")
         super.viewDidLoad()
         configureSearchBar()
         self.activityIndicator.isHidden = true
+        self.interactor.sendRecentPhotosFromInteractor()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        presenter.passData(segue: segue)
-    
-    }
-    
-    func displayFetchedPhotos(_ photos: [PhotoModel]?, totalPhotos: Int) {
-        if photos != nil {
-            self.photosArray.append(contentsOf: photos!)
-            self.totalPhotos = totalPhotos
-        } else {
-            presenterOutput.displayEmptyRequest(vc: self, searchBar: searchController.searchBar)
-        }
-        DispatchQueue.main.async {
-            self.activityIndicator.isHidden = true
-            self.activityIndicator.stopAnimating()
-        }
-    }
-    
-    func displayFetchedPhotosNextPage(_ photos: [PhotoModel], totalPhotos: Int) {
-        self.photosArray.append(contentsOf: photos)
-        self.totalPhotos = totalPhotos
-    }
-    
-    func performSearch (searchText: String) {
-        presenter.fetchPhotoFromPresenter(searchText: searchText, page: currentPage)
-    }
-    
-    func reloadData() {
-        DispatchQueue.main.async {
-            self.galleryCollectionView.reloadData()
-        }
+        router.passData(segue: segue)
     }
 }
 
@@ -100,25 +66,51 @@ extension PhotoSearchViewController: UICollectionViewDataSource {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PhotoSearchItem", for: indexPath) as! PhotoSearchItem
         cell.photoItem.layer.cornerRadius = 10
         cell.photoItem.layer.masksToBounds = true
-        if indexPath.row == photosArray.count - 6 && (self.totalPhotos) > photosArray.count {
+        cell.photoItem.alpha = 0
+        UIView.animate(withDuration: 0.2, animations: {
+            cell.photoItem.image = self.imagesArray[indexPath.row].image
+            cell.photoItem.alpha = 1.0
+        })
+        if (indexPath.row == imagesArray.count - 10) && (totalPages > currentPage) && (imagesArray.count == count) {
             currentPage += 1
-            self.performSearch(searchText: Constants.tagForSearch)
-        }
-
-        cell.photoItem.sd_setImage(with: photosArray[indexPath.row].downloadSmallImage() as URL) {(image, error, cache, url) in
-            cell.photoItem.image = image
+            self.interactor.load(needToLoad: true)
         }
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photosArray.count
+        return imagesArray.count
+    }
+    
+    func displayEmptyRequest() {
+        DispatchQueue.main.async {
+            let alertController = UIAlertController(title: "Photo not found!", message: "change query", preferredStyle: .alert)
+            alertController.addAction(UIAlertAction(title: "OK", style: .cancel, handler: { action in
+                alertController.dismiss(animated: true, completion: nil)
+                self.searchController.searchBar.becomeFirstResponder()
+                
+            }) )
+            self.present(alertController, animated: true)
+        }
+    }
+    
+    func insertItems(photos: PhotoModel) {
+        
+        DispatchQueue.main.async {
+            self.activityIndicator.isHidden = true
+            self.activityIndicator.stopAnimating()
+            self.galleryCollectionView.performBatchUpdates({
+                let indexPaths = IndexPath(row: self.imagesArray.count, section: 0)
+                self.imagesArray.append(photos)
+                self.galleryCollectionView.insertItems(at: [indexPaths])
+            }, completion: nil)
+        }
     }
 }
-
+//MARK:- Delegate
 extension PhotoSearchViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        self.presenter.goToDetailScreen()
+        router.navigateToDetail()
     }
 }
 
@@ -128,7 +120,7 @@ extension PhotoSearchViewController: UICollectionViewDelegateFlowLayout {
         
         var itemSize : CGSize
         let length = (UIScreen.main.bounds.width) / 3 - 1.4
-        if indexPath.row < photosArray.count {
+        if indexPath.row < imagesArray.count {
             itemSize = CGSize(width: length, height: length)
         } else {
             itemSize = CGSize(width: galleryCollectionView.bounds.width, height: 50.0)
@@ -153,19 +145,23 @@ extension PhotoSearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         Constants.tagForSearch = searchBar.text!
         DispatchQueue.main.async {
+            self.interactor.page = 0
+            self.count = 0
             self.currentPage = 1
-            self.photosArray.removeAll()
+            self.imagesArray.removeAll()
             self.galleryCollectionView.reloadData()
             self.activityIndicator.isHidden = false
             self.activityIndicator.startAnimating()
-            self.performSearch(searchText: self.searchController.searchBar.text!)
+            self.interactor.sendSearchPhotosFromInteractor()
         }
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchController.isActive = true
         DispatchQueue.main.async {
-            self.photosArray.removeAll()
+            self.interactor.page = 0
+            self.count = 0
+            self.imagesArray.removeAll()
             self.currentPage = 1
             self.activityIndicator.stopAnimating()
             self.activityIndicator.isHidden = true
